@@ -83,4 +83,4 @@ end
 
 # twitterにツイート
 puts text
-# $client.update(text)
+$client.update(text)
