@@ -2,20 +2,20 @@
 require './twitter_config'
 
 # 辞書から文章生成、ツイート
-# 2次マルコフ連鎖を想定
+# 1次マルコフ連鎖を想定
 
 lines = 0			# 行数
 map = Hash.new(0)
 text = ""			# 生成文字列
-w1 = w2 = w3 = ""		# 直前の単語
+w1 = w2 = ""		# 直前の単語
 
 # 文章生成
-open("dic.txt") { |file|
+open("dic_n.txt") { |file|
 	inputs = file.readlines
 	inputs.each do |l|
 		lines += 1
 		words = l.split(',')
-		map[words[0..2]] = words[3].to_i
+		map[words[0..1]] = words[2].to_i
 	end
 
 	# 最初の1語を決定
@@ -23,31 +23,30 @@ open("dic.txt") { |file|
 	firstWords = inputs[index].split(',')
 	w1 = firstWords[0]
 	w2 = firstWords[1]
-	w3 = firstWords[2]
-	text += w1 + w2 + w3
+	text += w1 + w2
 }
 
 mapArray = map.to_a
 
-lim = 140 - w1.length - w2.length - w3.length
+lim = 140 - w1.length - w2.length
 while lim>0 do
-	# 2分探索でmapからw2,w3をw1,w2として持つ要素群の先頭を探す
+	# 2分探索でmapからw2をw1として持つ要素群の先頭を探す
 	l = 0
 	r = lines-1
 	found = false
 	while l < r do
 		center = (l+r) / 2
-		if (mapArray[center][0][0] < w2) || (mapArray[center][0][0] == w2 && mapArray[center][0][1] < w3) then
+		if mapArray[center][0][0] < w2 then
 			l = center+1
-		elsif (mapArray[center][0][0] > w2) || (mapArray[center][0][0] == w2 && mapArray[center][0][1] > w3) then
+		elsif mapArray[center][0][0] > w2 then
 			r = center-1
 		else
 			l = r = center
-			while 0<=l && mapArray[center][0][0] == mapArray[l][0][0] && mapArray[center][0][1] == mapArray[l][0][1] do
+			while 0<=l && mapArray[center][0][0] == mapArray[l][0][0] do
 				l -= 1
 			end
 			l += 1
-			while r<lines && mapArray[center][0][0] == mapArray[r][0][0] && mapArray[center][0][1] == mapArray[r][0][1] do
+			while r<lines && mapArray[center][0][0] == mapArray[r][0][0] do
 				r += 1
 			end
 			found = true
@@ -75,11 +74,10 @@ while lim>0 do
 	end
 
 	# 文章生成とか
-	text += mapArray[index][0][2]
-	lim -= mapArray[index][0][2].length
-	w1 = mapArray[index][0][0]
+	text += mapArray[index][0][1]
+	lim -= mapArray[index][0][1].length
+	w1 = w2
 	w2 = mapArray[index][0][1]
-	w3 = mapArray[index][0][2]
 
 end
 
